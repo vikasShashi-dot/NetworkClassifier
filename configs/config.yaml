@@ -1,0 +1,105 @@
+# configs/config.yaml
+# Network Traffic Classifier Configuration
+
+# ─── Dataset ──────────────────────────────────────────────────────────────────
+dataset:
+  name: "ISCX_VPN"           # ISCX_VPN | UNSW_NB15 | QUIC
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  label_column: "label"
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+
+# ─── Feature Extraction ───────────────────────────────────────────────────────
+features:
+  window_size: 20             # packets per flow window
+  min_packets: 5              # minimum packets to form a flow
+  flow_timeout: 120           # seconds before flow expires
+  selected:
+    - fwd_packet_count
+    - bwd_packet_count
+    - total_fwd_bytes
+    - total_bwd_bytes
+    - fwd_pkt_len_mean
+    - fwd_pkt_len_std
+    - fwd_pkt_len_min
+    - fwd_pkt_len_max
+    - bwd_pkt_len_mean
+    - bwd_pkt_len_std
+    - bwd_pkt_len_min
+    - bwd_pkt_len_max
+    - flow_duration
+    - flow_bytes_per_sec
+    - flow_pkts_per_sec
+    - iat_mean
+    - iat_std
+    - iat_min
+    - iat_max
+    - fwd_iat_mean
+    - fwd_iat_std
+    - bwd_iat_mean
+    - bwd_iat_std
+    - fwd_bwd_byte_ratio
+    - fwd_bwd_pkt_ratio
+    - header_ratio
+    - payload_ratio
+    - active_mean
+    - idle_mean
+
+# ─── Unsupervised Models ──────────────────────────────────────────────────────
+unsupervised:
+  kmeans:
+    n_clusters: 8
+    max_iter: 500
+    n_init: 20
+    random_state: 42
+  dbscan:
+    eps: 0.5
+    min_samples: 10
+    metric: "euclidean"
+
+# ─── Supervised Models ────────────────────────────────────────────────────────
+supervised:
+  svm:
+    kernel: "rbf"
+    C: 10.0
+    gamma: "scale"
+    probability: true
+    max_iter: 2000
+  random_forest:
+    n_estimators: 200
+    max_depth: 20
+    min_samples_split: 5
+    random_state: 42
+    n_jobs: -1
+
+# ─── CNN Model ────────────────────────────────────────────────────────────────
+cnn:
+  input_shape: [20, 29, 1]    # (window_size, n_features, channels)
+  filters: [32, 64, 128]
+  kernel_size: 3
+  pool_size: 2
+  dropout: 0.3
+  dense_units: [256, 128]
+  learning_rate: 0.001
+  batch_size: 64
+  epochs: 50
+  patience: 10               # early stopping patience
+
+# ─── Outputs ──────────────────────────────────────────────────────────────────
+outputs:
+  model_dir: "outputs/models"
+  report_dir: "outputs/reports"
+  plot_dir: "outputs/plots"
+  log_dir: "outputs/logs"
+
+# ─── Live Capture ─────────────────────────────────────────────────────────────
+live_capture:
+  interface: "eth0"
+  capture_timeout: 5          # seconds to collect packets per flow
+  min_flow_packets: 5
+  model_path: "outputs/models/svm_model.pkl"
+  scaler_path: "outputs/models/scaler.pkl"
+  label_encoder_path: "outputs/models/label_encoder.pkl"
+  display_top_n: 10
